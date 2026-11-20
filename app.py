@@ -22,6 +22,15 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 
+def _is_running_in_streamlit() -> bool:
+    try:
+        import streamlit as st
+
+        return bool(st.runtime.exists())
+    except Exception:
+        return False
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="DetectObject — AI Real-Time Object Detection Launcher")
     parser.add_argument("--port", type=int, default=8501, help="Port for Streamlit dashboard (default: 8501)")
@@ -80,5 +89,9 @@ def main() -> int:
         return 0
 
 
-if __name__ == "__main__":
+if _is_running_in_streamlit():
+    from application.dashboard import main as run_dashboard
+
+    run_dashboard()
+elif __name__ == "__main__":
     raise SystemExit(main())
