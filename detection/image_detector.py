@@ -13,7 +13,7 @@ from PIL import Image, ImageOps
 
 from configuration.settings import AppConfig, get_logger, load_config
 from detection.visualizer import DetectionVisualizer
-from models.detector import DetectionResult, ObjectDetector, OpenVocabularyDetector
+from models.detector import Detection, DetectionResult, ObjectDetector, OpenVocabularyDetector
 
 logger = get_logger("detectobject.image")
 
@@ -29,6 +29,30 @@ class ImageDetectionOutput:
     annotated_bgr: np.ndarray
     result: DetectionResult
     saved_path: Path | None = None
+
+    @property
+    def detections(self) -> list[Detection]:
+        return self.result.detections
+
+    @property
+    def total_count(self) -> int:
+        return self.result.total_count
+
+    @property
+    def class_counts(self) -> dict[str, int]:
+        return self.result.class_counts
+
+    @property
+    def inference_ms(self) -> float:
+        return self.result.inference_time_ms
+
+    @property
+    def inference_time_ms(self) -> float:
+        return self.result.inference_time_ms
+
+    @property
+    def fps(self) -> float:
+        return self.result.fps
 
     def to_png_bytes(self) -> bytes:
         ok, buf = cv2.imencode(".png", self.annotated_bgr)
