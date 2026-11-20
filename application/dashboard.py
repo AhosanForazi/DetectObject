@@ -23,7 +23,6 @@ from application.components.widgets import (
     render_class_pills,
     render_detection_table,
     render_page_head,
-    render_top_menu_bar,
 )
 from configuration.settings import AppConfig, detect_compute_device, load_config
 from detection.image_detector import ImageDetector
@@ -607,25 +606,41 @@ def main() -> None:
         st.caption(f"Classes: **{len(detector.class_names)}**")
         st.caption("Architecture: **YOLO11n**")
 
-    # 2. Prominent Top Navigation Menu Bar
-    current_page = st.session_state.get("top_navbar_radio", NAV_PAGES[0])
-    selected_page = render_top_menu_bar(
-        nav_pages=NAV_PAGES,
-        default_page=current_page,
-        weights_name=detector.weights_path.name,
-        device=detector.device,
-    )
+    # 2. Header Bar (Branding & Live Status)
+    col_brand, col_status = st.columns([3, 1], vertical_alignment="center")
+    with col_brand:
+        st.markdown(
+            '<div class="do-brand-title"><span>◎</span> DetectObject <span style="font-size: 0.85rem; font-weight: 400; color: #64748b;">· Real-Time Vision System</span></div>',
+            unsafe_allow_html=True,
+        )
+    with col_status:
+        st.markdown(
+            f'<div style="text-align: right;"><span class="do-nav-badge"><span class="dot"></span> {detector.weights_path.name} · {detector.device.upper()}</span></div>',
+            unsafe_allow_html=True,
+        )
 
-    # 3. Page Routing
-    if selected_page == "Image Detection":
+    # 3. Always-Visible Native Navigation Tabs (100% Clickable, Real HTML Buttons)
+    t_img, t_vid, t_cam, t_trk, t_mod = st.tabs([
+        "🖼️ Image Detection",
+        "🎥 Video Detection",
+        "📷 Live Webcam",
+        "🎯 Object Tracking",
+        "ℹ️ Model Information",
+    ])
+
+    with t_img:
         page_image_detection(config, detector)
-    elif selected_page == "Video Detection":
+
+    with t_vid:
         page_video_detection(config, detector)
-    elif selected_page == "Live Webcam":
+
+    with t_cam:
         page_live_webcam(config, detector)
-    elif selected_page == "Object Tracking":
+
+    with t_trk:
         page_object_tracking(config, detector)
-    elif selected_page == "Model Information":
+
+    with t_mod:
         page_model_information(config, detector)
 
 

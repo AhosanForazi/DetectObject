@@ -80,55 +80,43 @@ def apply_theme(theme: str = "light") -> None:
                 border-radius: 50%;
                 background: #16a34a;
             }
-            /* Segmented Top Menu Bar styling for horizontal radio */
-            div[data-testid="stRadio"]:has(input[value="Image Detection"]),
-            div[data-testid="stRadio"]:has(input[name*="top_navbar_radio"]),
-            div[role="radiogroup"]:has(input[value="Image Detection"]) {
+            /* Top Navigation Menu Tabs (100% Clickable, Real Buttons) */
+            div[data-testid="stTabs"] {
+                margin-top: 0.4rem;
+                margin-bottom: 1.25rem;
+            }
+            div[data-testid="stTabs"] > div[role="tablist"] {
                 display: flex !important;
-                flex-direction: row !important;
                 flex-wrap: wrap !important;
-                align-items: center !important;
-                gap: 0.35rem !important;
-                background: #f1f5f9 !important;
-                padding: 0.25rem 0.35rem !important;
-                border-radius: 10px !important;
+                gap: 0.4rem !important;
+                background-color: #f1f5f9 !important;
+                padding: 0.35rem !important;
+                border-radius: 12px !important;
                 border: 1px solid #e2e8f0 !important;
-                width: fit-content !important;
-                margin: 0 auto !important;
             }
-            div[role="radiogroup"]:has(input[value="Image Detection"]) label {
-                margin: 0 !important;
-                padding: 0.38rem 0.85rem !important;
-                border-radius: 7px !important;
+            button[data-testid="stTab"] {
+                flex: 1 1 auto !important;
                 background: transparent !important;
-                cursor: pointer !important;
-                transition: all 0.15s ease-in-out !important;
-            }
-            div[role="radiogroup"]:has(input[value="Image Detection"]) label:hover {
-                background: #e2e8f0 !important;
-            }
-            /* Hide default radio circle */
-            div[role="radiogroup"]:has(input[value="Image Detection"]) div[data-testid="stRadioCircle"],
-            div[role="radiogroup"]:has(input[value="Image Detection"]) label > div:first-child {
-                display: none !important;
-            }
-            div[role="radiogroup"]:has(input[value="Image Detection"]) label p {
-                font-size: 0.86rem !important;
+                border: none !important;
+                border-radius: 8px !important;
+                padding: 0.5rem 1.1rem !important;
+                font-size: 0.92rem !important;
                 font-weight: 500 !important;
                 color: #475569 !important;
-                margin: 0 !important;
+                cursor: pointer !important;
+                transition: all 0.15s ease-in-out !important;
+                text-align: center !important;
                 white-space: nowrap !important;
             }
-            /* Active selected item */
-            div[role="radiogroup"]:has(input[value="Image Detection"]) label:has(input:checked),
-            div[role="radiogroup"]:has(input[value="Image Detection"]) label[data-checked="true"] {
-                background: #ffffff !important;
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+            button[data-testid="stTab"]:hover {
+                color: #0f172a !important;
+                background-color: #e2e8f0 !important;
             }
-            div[role="radiogroup"]:has(input[value="Image Detection"]) label:has(input:checked) p,
-            div[role="radiogroup"]:has(input[value="Image Detection"]) label[data-checked="true"] p {
+            button[data-testid="stTab"][aria-selected="true"] {
                 color: #2563eb !important;
                 font-weight: 600 !important;
+                background-color: #ffffff !important;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
             }
             .do-brand {
                 font-size: 1.05rem;
