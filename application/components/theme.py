@@ -19,7 +19,6 @@ def apply_theme(theme: str = "light") -> None:
                 background-color: transparent !important;
                 z-index: 99 !important;
             }
-            /* Make sure sidebar toggle button in header is always visible & styled */
             button[data-testid="stSidebarCollapseButton"],
             [data-testid="stHeader"] button,
             button[data-testid="baseButton-header"] {
@@ -47,7 +46,6 @@ def apply_theme(theme: str = "light") -> None:
             section[data-testid="stSidebar"] * {
                 color: #0f172a;
             }
-            /* Top Navigation Menu Tabs (Clean & Minimalist, 100% Clickable) */
             div[data-testid="stTabs"] {
                 margin-top: 0.4rem;
                 margin-bottom: 1.25rem;

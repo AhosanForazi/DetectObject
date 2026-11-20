@@ -38,14 +38,6 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-NAV_PAGES = [
-    "Image Detection",
-    "Video Detection",
-    "Live Webcam",
-    "Object Tracking",
-    "Model Information",
-]
-
 
 @st.cache_resource(show_spinner="Loading model...")
 def get_cached_detector(weights_path: str | None, device: str) -> ObjectDetector:
@@ -77,9 +69,7 @@ def get_active_detector(config: AppConfig) -> ObjectDetector:
     return get_cached_detector(weights_choice, device_choice)
 
 
-# ==============================================================================
-# 1. IMAGE DETECTION
-# ==============================================================================
+# 1. Image Detection
 def page_image_detection(config: AppConfig, detector: ObjectDetector) -> None:
     render_page_head("Image Detection", "Upload JPG, PNG, or WEBP images to detect and count objects.")
 
@@ -170,9 +160,7 @@ def page_image_detection(config: AppConfig, detector: ObjectDetector) -> None:
             render_detection_table(res.detections)
 
 
-# ==============================================================================
-# 2. VIDEO DETECTION
-# ==============================================================================
+# 2. Video Detection
 def page_video_detection(config: AppConfig, detector: ObjectDetector) -> None:
     render_page_head("Video Detection", "Upload MP4, AVI, MOV, or WEBM videos or select a built-in sample clip for frame-by-frame detection.")
 
@@ -265,13 +253,11 @@ def page_video_detection(config: AppConfig, detector: ObjectDetector) -> None:
         st.download_button("Download Processed Video (MP4)", data=video_bytes, file_name=Path(out.output_path).name, mime="video/mp4")
 
 
-# ==============================================================================
-# 3. LIVE WEBCAM
-# ==============================================================================
+# 3. Live Webcam
 def page_live_webcam(config: AppConfig, detector: ObjectDetector) -> None:
     render_page_head("Live Webcam", "Real-time object detection, persistent tracking, counting, and screenshot capture.")
 
-    tab_stream, tab_sim, tab_cloud = st.tabs(["⚡ Live Camera Stream (30 FPS)", "🎬 Live Camera Feed Simulation", "📸 Camera Snapshot"])
+    tab_stream, tab_sim, tab_cloud = st.tabs(["Live Camera Stream (30 FPS)", "Camera Feed Simulation", "Camera Snapshot"])
 
     with tab_stream:
         server = get_live_inference_server()
@@ -363,9 +349,7 @@ def page_live_webcam(config: AppConfig, detector: ObjectDetector) -> None:
             )
 
 
-# ==============================================================================
-# 4. OBJECT TRACKING
-# ==============================================================================
+# 4. Object Tracking
 def page_object_tracking(config: AppConfig, detector: ObjectDetector) -> None:
     render_page_head("Object Tracking", "Track objects with persistent IDs across video frames with ByteTrack or BoT-SORT, motion trails, and counting lines.")
 
@@ -475,9 +459,7 @@ def page_object_tracking(config: AppConfig, detector: ObjectDetector) -> None:
         st.download_button("Download Tracked Video (MP4)", data=vbytes, file_name=Path(out.output_path).name, mime="video/mp4")
 
 
-# ==============================================================================
-# 5. MODEL INFORMATION
-# ==============================================================================
+# 5. Model Information
 def page_model_information(config: AppConfig, detector: ObjectDetector) -> None:
     render_page_head("Model Information", "Active weights, device info, measured test performance, and visual evaluation reports.")
 
@@ -523,11 +505,10 @@ def page_model_information(config: AppConfig, detector: ObjectDetector) -> None:
         e4.metric("mAP@0.5", f"{eval_data['map50']:.3f}")
         e5.metric("mAP@0.5:0.95", f"{eval_data['map50_95']:.3f}")
 
-        # Tabbed visual evaluation plots
         plots_dir = PROJECT_ROOT / "reports" / "plots"
         if plots_dir.exists():
             st.markdown("#### Evaluation Plots & Performance Curves")
-            p_tab1, p_tab2, p_tab3 = st.tabs(["📊 Precision-Recall & Confusion Matrix", "📉 Training & Validation Loss", "⚡ Inference Speed & Class Breakdown"])
+            p_tab1, p_tab2, p_tab3 = st.tabs(["Precision-Recall & Confusion Matrix", "Training & Validation Loss", "Inference Speed & Class Breakdown"])
 
             with p_tab1:
                 col_cm, col_pr = st.columns(2)
@@ -573,16 +554,12 @@ def page_model_information(config: AppConfig, detector: ObjectDetector) -> None:
     st.dataframe(pd.DataFrame(rows), width="stretch", hide_index=True, height=280)
 
 
-# ==============================================================================
-# MAIN
-# ==============================================================================
 def main() -> None:
     config = load_config()
     apply_theme("light")
 
     detector = get_active_detector(config)
 
-    # 1. Sidebar: Model selector & Quick Info
     with st.sidebar:
         st.markdown('<div class="do-brand">DetectObject</div>', unsafe_allow_html=True)
         st.caption("Active Model Weights")
@@ -606,7 +583,6 @@ def main() -> None:
         st.caption(f"Classes: **{len(detector.class_names)}**")
         st.caption("Architecture: **YOLO11n**")
 
-    # Navigation Tabs (Clean & Minimalist, 100% Clickable)
     t_img, t_vid, t_cam, t_trk, t_mod = st.tabs([
         "Image Detection",
         "Video Detection",
