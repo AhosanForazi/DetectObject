@@ -1,16 +1,6 @@
----
-title: DetectObject AI
-emoji: 🎯
-colorFrom: blue
-colorTo: indigo
-sdk: streamlit
-sdk_version: "1.38.0"
-app_file: app.py
-pinned: false
-license: mit
----
 
-# DetectObject — AI-Powered Real-Time Object Detection System
+
+# DetectObject — Real-Time Object Detection System
 
 **DetectObject** is an end-to-end computer vision platform for real-time **multi-object detection, tracking, and counting** across images, uploaded videos, and live webcams. Built on **Ultralytics YOLO11**, **PyTorch**, **OpenCV**, **PyAV**, and **Streamlit**, it runs smoothly on CPU-only laptops while automatically utilizing NVIDIA CUDA or Apple MPS when available.
 
