@@ -1,0 +1,26 @@
+{
+  "status": "completed",
+  "base_model": "yolo11n.pt",
+  "dataset_yaml": "C:\\Users\\Ahosan Habib\\OneDrive\\Desktop\\detectObject\\datasets\\processed\\dataset.yaml",
+  "device": "cpu",
+  "epochs_configured": 8,
+  "epochs_completed": 7,
+  "batch_size_used": 8,
+  "imgsz_used": 320,
+  "optimizer": "SGD",
+  "learning_rate": 0.0003,
+  "seed": 42,
+  "duration_sec": 84.43,
+  "best_checkpoint_path": "C:\\Users\\Ahosan Habib\\OneDrive\\Desktop\\detectObject\\models\\weights\\best.pt",
+  "backup_checkpoint_path": "C:\\Users\\Ahosan Habib\\OneDrive\\Desktop\\detectObject\\models\\weights\\backups\\best_backup_20261118_094749.pt",
+  "run_dir": "C:\\Users\\Ahosan Habib\\OneDrive\\Desktop\\detectObject\\logs\\training\\detectobject_yolo11n",
+  "results_csv_path": "C:\\Users\\Ahosan Habib\\OneDrive\\Desktop\\detectObject\\logs\\training\\detectobject_yolo11n\\results.csv",
+  "final_val_metrics": {
+    "metrics/precision(B)": 0.70207,
+    "metrics/recall(B)": 0.61443,
+    "metrics/mAP50(B)": 0.68759,
+    "metrics/mAP50-95(B)": 0.50766,
+    "fitness": 0.50766
+  },
+  "completed_at_utc": "2026-11-18T03:47:49.348618+00:00"
+}

@@ -1,0 +1,32 @@
+# Git & VCS
+.git
+.gitignore
+.github
+
+# Python caches and environments
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-wheel-metadata/
+
+# Testing and reports
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+
+# Large training logs and raw datasets
+logs/training/
+datasets/raw/
+outputs/screenshots/*.png
+outputs/videos/*.mp4
+outputs/images/*.png
+
+# OS artifacts
+.DS_Store
+Thumbs.db

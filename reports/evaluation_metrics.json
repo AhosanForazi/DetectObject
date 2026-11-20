@@ -1,0 +1,376 @@
+{
+  "model_weights": "C:\\Users\\Ahosan Habib\\OneDrive\\Desktop\\detectObject\\models\\weights\\best.pt",
+  "dataset_yaml": "C:\\Users\\Ahosan Habib\\OneDrive\\Desktop\\detectObject\\datasets\\processed\\dataset.yaml",
+  "split_evaluated": "test",
+  "device": "cpu",
+  "imgsz": 320,
+  "precision": 0.6913,
+  "recall": 0.5563,
+  "f1_score": 0.6165,
+  "map50": 0.6039,
+  "map50_95": 0.4527,
+  "class_metrics": [
+    {
+      "class_id": 3,
+      "class_name": "motorcycle",
+      "precision": 0.6066,
+      "recall": 1.0,
+      "f1_score": 0.7551,
+      "ap50": 0.995,
+      "ap50_95": 0.597
+    },
+    {
+      "class_id": 4,
+      "class_name": "airplane",
+      "precision": 0.3693,
+      "recall": 1.0,
+      "f1_score": 0.5394,
+      "ap50": 0.995,
+      "ap50_95": 0.796
+    },
+    {
+      "class_id": 6,
+      "class_name": "train",
+      "precision": 0.6015,
+      "recall": 1.0,
+      "f1_score": 0.7512,
+      "ap50": 0.995,
+      "ap50_95": 0.796
+    },
+    {
+      "class_id": 7,
+      "class_name": "truck",
+      "precision": 0.6045,
+      "recall": 1.0,
+      "f1_score": 0.7535,
+      "ap50": 0.995,
+      "ap50_95": 0.4975
+    },
+    {
+      "class_id": 16,
+      "class_name": "dog",
+      "precision": 0.6587,
+      "recall": 1.0,
+      "f1_score": 0.7942,
+      "ap50": 0.995,
+      "ap50_95": 0.995
+    },
+    {
+      "class_id": 17,
+      "class_name": "horse",
+      "precision": 0.6319,
+      "recall": 1.0,
+      "f1_score": 0.7744,
+      "ap50": 0.995,
+      "ap50_95": 0.5222
+    },
+    {
+      "class_id": 22,
+      "class_name": "zebra",
+      "precision": 0.802,
+      "recall": 1.0,
+      "f1_score": 0.8901,
+      "ap50": 0.995,
+      "ap50_95": 0.929
+    },
+    {
+      "class_id": 27,
+      "class_name": "tie",
+      "precision": 0.5818,
+      "recall": 1.0,
+      "f1_score": 0.7356,
+      "ap50": 0.995,
+      "ap50_95": 0.995
+    },
+    {
+      "class_id": 39,
+      "class_name": "bottle",
+      "precision": 0.5453,
+      "recall": 1.0,
+      "f1_score": 0.7057,
+      "ap50": 0.995,
+      "ap50_95": 0.796
+    },
+    {
+      "class_id": 42,
+      "class_name": "fork",
+      "precision": 0.5731,
+      "recall": 1.0,
+      "f1_score": 0.7286,
+      "ap50": 0.995,
+      "ap50_95": 0.995
+    },
+    {
+      "class_id": 48,
+      "class_name": "sandwich",
+      "precision": 0.6784,
+      "recall": 1.0,
+      "f1_score": 0.8084,
+      "ap50": 0.995,
+      "ap50_95": 0.995
+    },
+    {
+      "class_id": 55,
+      "class_name": "cake",
+      "precision": 0.5731,
+      "recall": 1.0,
+      "f1_score": 0.7286,
+      "ap50": 0.995,
+      "ap50_95": 0.8955
+    },
+    {
+      "class_id": 57,
+      "class_name": "couch",
+      "precision": 0.3557,
+      "recall": 1.0,
+      "f1_score": 0.5247,
+      "ap50": 0.995,
+      "ap50_95": 0.6965
+    },
+    {
+      "class_id": 59,
+      "class_name": "bed",
+      "precision": 0.8589,
+      "recall": 1.0,
+      "f1_score": 0.9241,
+      "ap50": 0.995,
+      "ap50_95": 0.796
+    },
+    {
+      "class_id": 52,
+      "class_name": "hot dog",
+      "precision": 0.5707,
+      "recall": 1.0,
+      "f1_score": 0.7267,
+      "ap50": 0.6633,
+      "ap50_95": 0.6217
+    },
+    {
+      "class_id": 38,
+      "class_name": "tennis racket",
+      "precision": 0.5093,
+      "recall": 0.5,
+      "f1_score": 0.5046,
+      "ap50": 0.595,
+      "ap50_95": 0.4955
+    },
+    {
+      "class_id": 56,
+      "class_name": "chair",
+      "precision": 0.4278,
+      "recall": 0.5488,
+      "f1_score": 0.4808,
+      "ap50": 0.5591,
+      "ap50_95": 0.2572
+    },
+    {
+      "class_id": 0,
+      "class_name": "person",
+      "precision": 0.5025,
+      "recall": 0.4161,
+      "f1_score": 0.4552,
+      "ap50": 0.5163,
+      "ap50_95": 0.3613
+    },
+    {
+      "class_id": 2,
+      "class_name": "car",
+      "precision": 0.3399,
+      "recall": 1.0,
+      "f1_score": 0.5073,
+      "ap50": 0.4975,
+      "ap50_95": 0.3483
+    },
+    {
+      "class_id": 25,
+      "class_name": "umbrella",
+      "precision": 1.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.4975,
+      "ap50_95": 0.199
+    },
+    {
+      "class_id": 31,
+      "class_name": "snowboard",
+      "precision": 1.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.4975,
+      "ap50_95": 0.1658
+    },
+    {
+      "class_id": 74,
+      "class_name": "clock",
+      "precision": 0.8846,
+      "recall": 0.5,
+      "f1_score": 0.6389,
+      "ap50": 0.495,
+      "ap50_95": 0.396
+    },
+    {
+      "class_id": 14,
+      "class_name": "bird",
+      "precision": 0.5095,
+      "recall": 0.75,
+      "f1_score": 0.6068,
+      "ap50": 0.4728,
+      "ap50_95": 0.1738
+    },
+    {
+      "class_id": 73,
+      "class_name": "book",
+      "precision": 1.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.4117,
+      "ap50_95": 0.1887
+    },
+    {
+      "class_id": 63,
+      "class_name": "laptop",
+      "precision": 1.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.3317,
+      "ap50_95": 0.1548
+    },
+    {
+      "class_id": 58,
+      "class_name": "potted plant",
+      "precision": 1.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.2905,
+      "ap50_95": 0.2432
+    },
+    {
+      "class_id": 40,
+      "class_name": "wine glass",
+      "precision": 0.3202,
+      "recall": 0.2,
+      "f1_score": 0.2462,
+      "ap50": 0.2873,
+      "ap50_95": 0.207
+    },
+    {
+      "class_id": 26,
+      "class_name": "handbag",
+      "precision": 1.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.2487,
+      "ap50_95": 0.1492
+    },
+    {
+      "class_id": 60,
+      "class_name": "dining table",
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.199,
+      "ap50_95": 0.1222
+    },
+    {
+      "class_id": 24,
+      "class_name": "backpack",
+      "precision": 1.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.0383,
+      "ap50_95": 0.0077
+    },
+    {
+      "class_id": 32,
+      "class_name": "sports ball",
+      "precision": 1.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.0,
+      "ap50_95": 0.0
+    },
+    {
+      "class_id": 64,
+      "class_name": "mouse",
+      "precision": 1.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.0,
+      "ap50_95": 0.0
+    },
+    {
+      "class_id": 65,
+      "class_name": "remote",
+      "precision": 1.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.0,
+      "ap50_95": 0.0
+    },
+    {
+      "class_id": 77,
+      "class_name": "teddy bear",
+      "precision": 1.0,
+      "recall": 0.0,
+      "f1_score": 0.0,
+      "ap50": 0.0,
+      "ap50_95": 0.0
+    }
+  ],
+  "fps_benchmarks": [
+    {
+      "imgsz": 320,
+      "iterations": 20,
+      "mean_latency_ms": 46.98,
+      "median_latency_ms": 44.73,
+      "p95_latency_ms": 66.32,
+      "measured_fps": 21.29,
+      "device": "cpu",
+      "measurement_type": "measured"
+    },
+    {
+      "imgsz": 480,
+      "iterations": 20,
+      "mean_latency_ms": 82.9,
+      "median_latency_ms": 79.88,
+      "p95_latency_ms": 131.49,
+      "measured_fps": 12.06,
+      "device": "cpu",
+      "measurement_type": "measured"
+    },
+    {
+      "imgsz": 640,
+      "iterations": 20,
+      "mean_latency_ms": 166.86,
+      "median_latency_ms": 148.88,
+      "p95_latency_ms": 287.0,
+      "measured_fps": 5.99,
+      "device": "cpu",
+      "measurement_type": "measured"
+    }
+  ],
+  "ultralytics_val_dir": "C:\\Users\\Ahosan Habib\\OneDrive\\Desktop\\detectObject\\reports\\ultralytics_test_eval",
+  "hardware_info": {
+    "os": "Windows 11 (10.0.26200)",
+    "architecture": "AMD64",
+    "python_version": "3.14.4",
+    "cpu_cores_physical": 4,
+    "cpu_cores_logical": 8,
+    "ram_total_gb": 5.74,
+    "ram_available_gb": 0.28,
+    "ram_used_percent": 95.1,
+    "disk_total_gb": 137.95,
+    "disk_free_gb": 42.68,
+    "device": {
+      "requested": "auto",
+      "selected": "cpu",
+      "cuda_available": false,
+      "cuda_device_name": null,
+      "cuda_vram_gb": 0.0,
+      "mps_available": false,
+      "fallback_to_cpu": false
+    }
+  },
+  "evaluated_at_utc": "2026-11-18T03:57:18.191725+00:00",
+  "measurement_note": "All metrics and FPS benchmarks below were directly measured on the independent held-out test split and local hardware. No values were fabricated or estimated."
+}

@@ -1,0 +1,18 @@
+[Unit]
+Description=DetectObject — AI Real-Time Object Detection Service
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/opt/detectobject
+ExecStart=/opt/detectobject/venv/bin/streamlit run application/dashboard.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+Environment=STREAMLIT_SERVER_MAX_UPLOAD_SIZE=200
+
+[Install]
+WantedBy=multi-user.target
