@@ -10,8 +10,9 @@ def apply_theme(theme: str = "light") -> None:
     st.markdown(
         """
         <style>
-            #MainMenu, footer {
+            #MainMenu, footer, .stAppDeployButton, [data-testid="stToolbarActions"], [data-testid="stToolbar"] {
                 visibility: hidden;
+                display: none !important;
                 height: 0;
             }
             header[data-testid="stHeader"] {
@@ -30,7 +31,7 @@ def apply_theme(theme: str = "light") -> None:
                 border-radius: 8px !important;
             }
             .block-container {
-                padding-top: 1.0rem;
+                padding-top: 0.8rem;
                 padding-bottom: 2rem;
                 max-width: 1200px;
             }
@@ -46,41 +47,7 @@ def apply_theme(theme: str = "light") -> None:
             section[data-testid="stSidebar"] * {
                 color: #0f172a;
             }
-            /* Top Navigation Navbar */
-            .do-brand-title {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-                font-size: 1.15rem;
-                font-weight: 700;
-                letter-spacing: -0.02em;
-                color: #0f172a;
-                white-space: nowrap;
-            }
-            .do-brand-title span {
-                color: #2563eb;
-                font-size: 1.3rem;
-            }
-            .do-nav-badge {
-                display: inline-flex;
-                align-items: center;
-                gap: 0.4rem;
-                font-size: 0.76rem;
-                font-weight: 600;
-                color: #475569;
-                background: #f1f5f9;
-                padding: 0.3rem 0.75rem;
-                border-radius: 9999px;
-                border: 1px solid #e2e8f0;
-                white-space: nowrap;
-            }
-            .do-nav-badge .dot {
-                width: 7px;
-                height: 7px;
-                border-radius: 50%;
-                background: #16a34a;
-            }
-            /* Top Navigation Menu Tabs (100% Clickable, Real Buttons) */
+            /* Top Navigation Menu Tabs (Clean & Minimalist, 100% Clickable) */
             div[data-testid="stTabs"] {
                 margin-top: 0.4rem;
                 margin-bottom: 1.25rem;

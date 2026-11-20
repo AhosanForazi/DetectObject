@@ -606,26 +606,13 @@ def main() -> None:
         st.caption(f"Classes: **{len(detector.class_names)}**")
         st.caption("Architecture: **YOLO11n**")
 
-    # 2. Header Bar (Branding & Live Status)
-    col_brand, col_status = st.columns([3, 1], vertical_alignment="center")
-    with col_brand:
-        st.markdown(
-            '<div class="do-brand-title"><span>◎</span> DetectObject <span style="font-size: 0.85rem; font-weight: 400; color: #64748b;">· Real-Time Vision System</span></div>',
-            unsafe_allow_html=True,
-        )
-    with col_status:
-        st.markdown(
-            f'<div style="text-align: right;"><span class="do-nav-badge"><span class="dot"></span> {detector.weights_path.name} · {detector.device.upper()}</span></div>',
-            unsafe_allow_html=True,
-        )
-
-    # 3. Always-Visible Native Navigation Tabs (100% Clickable, Real HTML Buttons)
+    # Navigation Tabs (Clean & Minimalist, 100% Clickable)
     t_img, t_vid, t_cam, t_trk, t_mod = st.tabs([
-        "🖼️ Image Detection",
-        "🎥 Video Detection",
-        "📷 Live Webcam",
-        "🎯 Object Tracking",
-        "ℹ️ Model Information",
+        "Image Detection",
+        "Video Detection",
+        "Live Webcam",
+        "Object Tracking",
+        "Model Information",
     ])
 
     with t_img:
