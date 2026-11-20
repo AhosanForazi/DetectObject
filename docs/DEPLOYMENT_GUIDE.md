@@ -1,15 +1,16 @@
 # DetectObject — Production Deployment Guide
 **AI-Powered Real-Time Object Detection, Tracking & Counting System**
 
-This guide provides end-to-end instructions for deploying **DetectObject** across 5 primary target environments:
+This guide provides end-to-end instructions for deploying **DetectObject** across primary target environments:
 
-1. [Streamlit Community Cloud (Recommended — Free & 1-Click)](#1-streamlit-community-cloud-recommended--free)
-2. [Hugging Face Spaces (Free Cloud Hosting)](#2-hugging-face-spaces-free-cloud-hosting)
-3. [Docker & Docker Compose (Self-Hosted Containers)](#3-docker--docker-compose-containerized-deployment)
-4. [Linux Cloud VPS / VM (AWS, GCP, Azure, DigitalOcean)](#4-production-linux-vps-aws-gcp-digitalocean)
-5. [Local Network / LAN Deployment (Mobile & Multi-Device Access)](#5-local-network--lan-deployment)
-6. [Webcam & Browser Camera Security Architecture (HTTPS Requirements)](#6-webcam--browser-security-architecture)
-7. [Production Healthcheck & Troubleshooting](#7-production-healthcheck--troubleshooting)
+1. [Render Deployment (Recommended Cloud Web Service)](#1-render-deployment-recommended-cloud-web-service)
+2. [Vercel Architecture & Configuration](#2-vercel-architecture--configuration)
+3. [Streamlit Community Cloud (Free 1-Click Git Deploy)](#3-streamlit-community-cloud-free-1-click-git-deploy)
+4. [Hugging Face Spaces (Free Cloud Hosting)](#4-hugging-face-spaces-free-cloud-hosting)
+5. [Docker & Docker Compose (Containerized Deployment)](#5-docker--docker-compose-containerized-deployment)
+6. [Linux Cloud VPS / VM (AWS, GCP, Azure, DigitalOcean)](#6-production-linux-vps-aws-gcp-digitalocean)
+7. [Webcam & Browser Camera Security Architecture (HTTPS Requirements)](#7-webcam--browser-security-architecture)
+8. [Production Healthcheck & Troubleshooting](#8-production-healthcheck--troubleshooting)
 
 ---
 
@@ -17,17 +18,75 @@ This guide provides end-to-end instructions for deploying **DetectObject** acros
 
 Before pushing to production, verify that your repository contains the following deployment configurations:
 
+- [x] **`render.yaml`**: Infrastructure-as-code Blueprint for 1-click Render web service deployment.
+- [x] **`vercel.json` & `public/index.html`**: Configures Vercel to serve a static landing page, avoiding Python serverless execution errors.
+- [x] **`.python-version`**: Pinned to Python 3.11.9 for stable precompiled PyTorch/OpenCV wheels.
 - [x] **`packages.txt`**: Debian/Ubuntu APT packages (`libgl1`, `libglib2.0-0`, `ffmpeg`) for cloud runners.
-- [x] **`requirements.txt`**: PyTorch, Ultralytics, OpenCV, PyAV, and Streamlit pinned safely.
+- [x] **`requirements.txt`**: Production dependencies using `opencv-python-headless` and `lapx`.
 - [x] **`.streamlit/config.toml`**: `address = "0.0.0.0"`, `headless = true`, `maxUploadSize = 200`.
-- [x] **`Dockerfile`**: Python 3.11-slim base, system libraries, and dual port exposure (`8501`, `8511`).
+- [x] **`Dockerfile`**: Python 3.11-slim base, system libraries, and dynamic `$PORT` handling.
 - [x] **`docker-compose.yml`**: Volume mounts for models/weights and outputs, automatic restart.
 - [x] **`deploy/nginx/detectobject.conf`**: Nginx reverse proxy with WebSocket upgrade headers.
 - [x] **`deploy/systemd/detectobject.service`**: Systemd unit file for Linux service auto-restart.
 
 ---
 
-## 1. Streamlit Community Cloud (Recommended — Free)
+## 1. Render Deployment (Recommended Cloud Web Service)
+
+Render is the primary cloud hosting platform for the DetectObject Streamlit application.
+
+### Method A: Blueprint Deployment (Fastest)
+1. Sign in to [render.com](https://render.com).
+2. Click **Blueprints** &rarr; **New Blueprint Instance**.
+3. Select your repository: `https://github.com/AhosanForazi/DetectObject`.
+4. Render automatically detects [render.yaml](file:///c:/Users/Ahosan%20Habib/OneDrive/Desktop/detectObject/render.yaml) and configures the service, build command, start command, and environment variables.
+5. Click **Apply**.
+
+### Method B: Manual Web Service
+1. On the Render Dashboard, click **New +** &rarr; **Web Service**.
+2. Connect your GitHub repository `AhosanForazi/DetectObject`.
+3. Configure the service:
+   - **Name**: `detectobject`
+   - **Region**: Oregon (US West) or Frankfurt (EU)
+   - **Branch**: `main`
+   - **Root Directory**: leave blank (root)
+   - **Runtime**: `Python`
+   - **Build Command**:
+     ```bash
+     pip install --upgrade pip && pip install -r requirements.txt
+     ```
+   - **Start Command**:
+     ```bash
+     streamlit run application/dashboard.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --server.enableCORS false --server.enableXsrfProtection false
+     ```
+   - **Plan**: Free (or Starter for higher CPU/RAM)
+4. Under **Advanced &rarr; Environment Variables**, add:
+   - `PYTHON_VERSION`: `3.11.9`
+   - `STREAMLIT_SERVER_HEADLESS`: `true`
+   - `STREAMLIT_BROWSER_GATHER_USAGE_STATS`: `false`
+5. Click **Create Web Service**. Render will build and deploy the application.
+
+---
+
+## 2. Vercel Architecture & Configuration
+
+### Why Vercel Produced `[PYTHON_ENTRYPOINT_NOT_FOUND]`
+Vercel is a Serverless Function / Jamstack hosting platform. When Vercel detected `app.py` in the root folder, it attempted to load it as a serverless microservice (WSGI/ASGI like Flask/FastAPI) and threw:
+`[PYTHON_ENTRYPOINT_NOT_FOUND] Found app.py but it does not export a top-level "app", "application", or "handler" variable.`
+
+Moreover, **Vercel cannot run Streamlit computer vision applications**:
+- Serverless functions have a **250 MB size limit** (PyTorch + TorchVision + Ultralytics YOLO requires over 1.2 GB).
+- Serverless functions terminate after 10–60 seconds, which terminates Streamlit's WebSocket connection and model caching.
+
+### How DetectObject Handles Vercel
+1. The repository includes [vercel.json](file:///c:/Users/Ahosan%20Habib/OneDrive/Desktop/detectObject/vercel.json) configured with `"outputDirectory": "public"`.
+2. When Vercel builds the repo, it deploys [public/index.html](file:///c:/Users/Ahosan%20Habib/OneDrive/Desktop/detectObject/public/index.html) as a fast, responsive static showcase page that links to your live Render application.
+3. This completely bypasses the Python serverless runtime, allowing your Vercel deployment to succeed 100% without error.
+4. **Alternative**: If you do not need Vercel, simply navigate to your Vercel Project Settings &rarr; **Delete Project** (or disconnect the GitHub repository), as Render hosts the complete application.
+
+---
+
+## 3. Streamlit Community Cloud (Free 1-Click Git Deploy)
 
 Streamlit Community Cloud provides 100% free hosting, automated CI/CD directly from GitHub, and free **HTTPS** (which is essential for browser camera permissions).
 

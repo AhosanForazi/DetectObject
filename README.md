@@ -150,23 +150,37 @@ detectObject/
 
 ---
 
-## Production Deployment
+## Cloud & Production Deployment
 
 DetectObject is pre-configured for instant deployment across multiple environments:
 
+### 1. Render Deployment (Recommended for Full Application Hosting)
+- **Automatic via Blueprint**: Connect repository `AhosanForazi/DetectObject` on [render.com](https://render.com). Render detects [render.yaml](render.yaml) automatically.
+- **Manual Web Service**:
+  - **Runtime**: `Python` (or `Docker`)
+  - **Build Command**: `pip install --upgrade pip && pip install -r requirements.txt`
+  - **Start Command**: `streamlit run application/dashboard.py --server.port $PORT --server.address 0.0.0.0 --server.headless true --server.enableCORS false --server.enableXsrfProtection false`
+
+### 2. Streamlit Community Cloud (Free 1-Click Git Deploy)
+- Push to GitHub &rarr; Deploy at [share.streamlit.io](https://share.streamlit.io)
+- Select `AhosanForazi/DetectObject`, branch `main`, main file path `application/dashboard.py` (or `app.py`).
+- Reads [packages.txt](packages.txt) and [requirements.txt](requirements.txt) automatically.
+
+### 3. Vercel (Static Frontend & Landing Page)
+- Vercel is configured via [vercel.json](vercel.json) to deploy [public/index.html](public/index.html) as a fast static showcase page linking to your Render app.
+- This prevents Vercel serverless function errors (`[PYTHON_ENTRYPOINT_NOT_FOUND]`) because deep learning computer vision runtimes (PyTorch/YOLO/Streamlit) exceed Vercel's 250MB serverless limit and require persistent WebSocket processes.
+
+### 4. Docker & Docker Compose
 ```bash
-# Docker Compose (1-Command Local or Server Deployment)
+# Docker Compose (Local or Cloud Server)
 docker-compose up -d --build
 
-# Standalone Docker
+# Standalone Docker Container
 docker build -t detectobject:latest .
-docker run -d -p 8501:8501 -p 8511:8511 detectobject:latest
-
-# Streamlit Community Cloud (Free 1-Click Git Deploy)
-# Push to GitHub -> Deploy at share.streamlit.io (uses packages.txt and requirements.txt)
+docker run -d -p 8501:8501 detectobject:latest
 ```
 
-See the complete **[Production Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** for detailed instructions covering Streamlit Community Cloud, Hugging Face Spaces, Docker, and Ubuntu VPS with Nginx and SSL.
+See the complete **[Production Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** for detailed instructions covering Render, Streamlit Community Cloud, Hugging Face Spaces, Docker, and Ubuntu VPS with Nginx and SSL.
 
 ---
 

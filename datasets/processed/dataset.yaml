@@ -1,4 +1,4 @@
-path: C:/Users/Ahosan Habib/OneDrive/Desktop/detectObject/datasets/processed
+path: datasets/processed
 train: images/train
 val: images/val
 test: images/test

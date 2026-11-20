@@ -464,8 +464,9 @@ class DatasetManager:
 
         # Write YOLO-compatible dataset.yaml
         dataset_yaml_path = self.processed_dir / "dataset.yaml"
+        rel_path = "datasets/processed"
         dataset_yaml_payload = {
-            "path": str(self.processed_dir.resolve()).replace("\\", "/"),
+            "path": rel_path,
             "train": "images/train",
             "val": "images/val",
             "test": "images/test",

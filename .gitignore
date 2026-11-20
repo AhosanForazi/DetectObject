@@ -1,20 +1,49 @@
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-.pytest_cache/
+
+# Virtual environments
 .venv/
 venv/
 env/
+ENV/
+
+# Testing and coverage caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local environment & secrets
+.env
+.env.local
+.env.*.local
+
+# Vercel deployment cache
+.vercel/
+
+# OS-specific files
 .DS_Store
 Thumbs.db
+desktop.ini
 *.tmp
 *.bak
+
+# Logs
 logs/*.log
+*.log
+
+# Training checkpoints & backup weights (preserve production models/weights/*.pt)
 logs/training/**/weights/*.pt
+models/weights/backups/
+
+# Generated outputs (preserve .gitkeep)
 outputs/images/*
 !outputs/images/.gitkeep
 outputs/videos/*
 !outputs/videos/.gitkeep
 outputs/screenshots/*
 !outputs/screenshots/.gitkeep
+
+# Raw archive datasets
 datasets/raw/*.zip

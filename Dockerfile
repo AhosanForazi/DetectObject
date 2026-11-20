@@ -39,13 +39,13 @@ RUN mkdir -p /app/outputs/images \
              /app/logs/training \
              /app/models/weights
 
-# Expose Streamlit dashboard port (8501) and Live Inference API port (8511)
+# Expose default Streamlit port (can be overridden dynamically by $PORT on Render/Cloud)
+ENV PORT=8501
 EXPOSE 8501
-EXPOSE 8511
 
 # Healthcheck to monitor Streamlit availability
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8501/_stcore/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8501}/_stcore/health || exit 1
 
-# Launch the DetectObject dashboard
-ENTRYPOINT ["streamlit", "run", "application/dashboard.py", "--server.port=8501", "--server.address=0.0.0.0"]
+# Launch the DetectObject dashboard respecting $PORT
+CMD ["sh", "-c", "streamlit run application/dashboard.py --server.port=${PORT:-8501} --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false --server.enableXsrfProtection=false"]
