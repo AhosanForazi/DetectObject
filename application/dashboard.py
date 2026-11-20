@@ -22,6 +22,7 @@ from application.components.widgets import (
     render_class_pills,
     render_detection_table,
     render_page_head,
+    render_top_menu_bar,
 )
 from configuration.settings import AppConfig, detect_compute_device, load_config
 from detection.image_detector import ImageDetector
@@ -419,13 +420,56 @@ def main() -> None:
     config = load_config()
     apply_theme("light")
 
+    if "active_page" not in st.session_state:
+        st.session_state["active_page"] = NAV_PAGES[0]
+
+    detector = get_active_detector(config)
+
+    # 1. Prominent Top Navigation Menu Bar (Always Visible on all screen sizes)
+    selected_page = render_top_menu_bar(
+        nav_pages=NAV_PAGES,
+        default_page=st.session_state["active_page"],
+        weights_name=detector.weights_path.name,
+        device=detector.device,
+    )
+    st.session_state["active_page"] = selected_page
+
+    # 2. Sidebar Navigation & Model Switcher (Collapsible & Synchronized)
     with st.sidebar:
         st.markdown('<div class="do-brand">DetectObject</div>', unsafe_allow_html=True)
-        selected_page = st.radio("Navigation", NAV_PAGES, index=0, label_visibility="collapsed")
-        st.divider()
-        detector = get_active_detector(config)
-        st.caption(f"{detector.weights_path.name} · {detector.device.upper()}")
+        st.caption("Active Weights")
+        weights_list = discover_available_weights()
+        if weights_list:
+            chosen = st.selectbox(
+                "Weights",
+                options=weights_list,
+                format_func=lambda p: p.name,
+                index=0,
+                key="sidebar_weights_select",
+                label_visibility="collapsed",
+            )
+            if chosen and str(chosen) != st.session_state.get("selected_weights_path"):
+                st.session_state["selected_weights_path"] = str(chosen)
+                st.rerun()
 
+        st.caption(f"Device: **{detector.device.upper()}**")
+        st.divider()
+
+        st.caption("Navigation Menu")
+        for page_name in NAV_PAGES:
+            is_active = (page_name == selected_page)
+            if st.button(
+                page_name,
+                key=f"sidebar_nav_btn_{page_name}",
+                type="primary" if is_active else "secondary",
+                width="stretch",
+            ):
+                if st.session_state.get("top_navbar_radio") != page_name:
+                    st.session_state["top_navbar_radio"] = page_name
+                    st.session_state["active_page"] = page_name
+                    st.rerun()
+
+    # 3. Page Routing
     if selected_page == "Image Detection":
         page_image_detection(config, detector)
     elif selected_page == "Video Detection":
