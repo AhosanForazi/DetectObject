@@ -9,6 +9,7 @@ import time
 from pathlib import Path
 from typing import Any
 
+import cv2
 import pandas as pd
 import streamlit as st
 
@@ -174,34 +175,64 @@ def page_image_detection(config: AppConfig, detector: ObjectDetector) -> None:
 # 2. VIDEO DETECTION
 # ==============================================================================
 def page_video_detection(config: AppConfig, detector: ObjectDetector) -> None:
-    render_page_head("Video Detection", "Upload MP4, AVI, MOV, MKV, or WEBM videos for frame-by-frame detection and MP4 export.")
+    render_page_head("Video Detection", "Upload MP4, AVI, MOV, or WEBM videos or select a built-in sample clip for frame-by-frame detection.")
 
-    v1, v2 = st.columns([3.0, 0.8])
+    samples_dir = PROJECT_ROOT / "datasets" / "samples" / "videos"
+    sample_videos = sorted(samples_dir.glob("*.mp4")) if samples_dir.exists() else []
+
+    v1, v2, v3 = st.columns([2.2, 1.4, 0.8])
     with v1:
-        uploaded = st.file_uploader("Upload Video", type=["mp4", "avi", "mov", "mkv", "webm"], label_visibility="collapsed")
+        uploaded = st.file_uploader("Upload Video", type=["mp4", "avi", "mov", "mkv", "webm"], key="vid_upload", label_visibility="collapsed")
     with v2:
+        sample_choice = st.selectbox(
+            "Sample Video",
+            options=[None] + sample_videos,
+            format_func=lambda p: "Try a sample video..." if p is None else p.name,
+            key="vid_sample_select",
+            label_visibility="collapsed",
+        )
+    with v3:
         with st.popover("Options", width="stretch"):
             conf = st.slider("Confidence", 0.05, 0.95, float(config.get("model", "confidence_threshold", default=0.35)), 0.05, key="vid_conf")
             iou = st.slider("IoU", 0.10, 0.95, float(config.get("model", "iou_threshold", default=0.45)), 0.05, key="vid_iou")
             imgsz = st.select_slider("Resolution (px)", options=[320, 416, 480, 640], value=320, key="vid_imgsz")
             frame_skip = st.selectbox("Frame Skip", [1, 2, 3, 4], index=0, key="vid_skip")
 
+    video_source_path = None
+    source_name = "video"
+    is_temp = False
+
     if uploaded is not None:
-        if st.button("Process Video", type="primary"):
-            suffix = Path(uploaded.name).suffix or ".mp4"
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                tmp.write(uploaded.getvalue())
-                tmp_path = Path(tmp.name)
+        suffix = Path(uploaded.name).suffix or ".mp4"
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+        tmp.write(uploaded.getvalue())
+        tmp.close()
+        video_source_path = Path(tmp.name)
+        source_name = Path(uploaded.name).stem
+        is_temp = True
+    elif sample_choice is not None:
+        video_source_path = sample_choice
+        source_name = sample_choice.stem
 
-            pbar = st.progress(0.0, text="Processing...")
-            pipeline = VideoDetector(detector=detector, config=config)
+    if video_source_path is None:
+        st.markdown('<div class="do-empty"><p>Upload a video file or select a sample clip above to start frame-by-frame object detection.</p></div>', unsafe_allow_html=True)
+        return
 
-            def _cb(curr: int, total: int, fps: float, snap: Any) -> None:
-                pbar.progress(min(1.0, curr / max(1, total)), text=f"Frame {curr}/{total} · {fps:.1f} FPS · {snap.frame_total} objects")
+    btn_col, _ = st.columns([1.5, 4.0])
+    run_clicked = btn_col.button(f"Process {source_name}", type="primary", key="btn_run_video")
 
-            try:
+    if run_clicked:
+        pbar = st.progress(0.0, text="Initializing video pipeline...")
+        pipeline = VideoDetector(detector=detector, config=config)
+
+        def _cb(curr: int, total: int, fps: float, snap: Any) -> None:
+            pct = min(1.0, curr / max(1, total))
+            pbar.progress(pct, text=f"Frame {curr}/{total} · {fps:.1f} FPS · {snap.frame_total} objects in frame")
+
+        try:
+            with st.spinner("Processing video frames..."):
                 out = pipeline.process_video(
-                    video_path=tmp_path,
+                    video_path=video_source_path,
                     conf=conf,
                     iou=iou,
                     imgsz=imgsz,
@@ -209,21 +240,25 @@ def page_video_detection(config: AppConfig, detector: ObjectDetector) -> None:
                     tracking_enabled=False,
                     progress_callback=_cb,
                 )
-                st.session_state["last_video_output"] = out
-                pbar.empty()
-            except Exception as exc:
-                st.error(str(exc))
-            finally:
-                tmp_path.unlink(missing_ok=True)
-    elif st.session_state.get("last_video_output") is None:
-        st.markdown('<div class="do-empty"><p>Upload a video file above to start frame-by-frame object detection.</p></div>', unsafe_allow_html=True)
+            st.session_state["last_video_output"] = out
+            pbar.empty()
+            st.success(f"Video processed successfully: {out.processed_frames} frames @ {out.avg_processing_fps:.1f} avg FPS")
+        except Exception as exc:
+            st.error(f"Video processing error: {exc}")
+        finally:
+            if is_temp and video_source_path and video_source_path.exists():
+                try:
+                    video_source_path.unlink(missing_ok=True)
+                except Exception:
+                    pass
 
     out = st.session_state.get("last_video_output")
     if out is not None and Path(out.output_path).exists():
-        k1, k2, k3 = st.columns(3)
+        k1, k2, k3, k4 = st.columns(4)
         k1.metric("Frames Processed", f"{out.processed_frames} / {out.total_frames}")
         k2.metric("Avg FPS", f"{out.avg_processing_fps:.1f}")
         k3.metric("Peak Objects", out.peak_frame_objects)
+        k4.metric("Encoding", out.codec_used)
 
         video_bytes = Path(out.output_path).read_bytes()
         st.video(video_bytes)
@@ -235,14 +270,15 @@ def page_video_detection(config: AppConfig, detector: ObjectDetector) -> None:
 # 3. LIVE WEBCAM
 # ==============================================================================
 def page_live_webcam(config: AppConfig, detector: ObjectDetector) -> None:
-    render_page_head("Live Webcam", "Real-time object detection, tracking, counting, and screenshot capture from your camera.")
+    render_page_head("Live Webcam", "Real-time object detection, persistent tracking, counting, and screenshot capture.")
 
-    tab_stream, tab_cloud = st.tabs(["Real-Time Stream (30 FPS)", "Cloud Snapshot Camera"])
+    tab_stream, tab_sim, tab_cloud = st.tabs(["⚡ Live Camera Stream (30 FPS)", "🎬 Live Camera Feed Simulation", "📸 Camera Snapshot"])
 
     with tab_stream:
         server = get_live_inference_server()
         server.set_detector(detector)
 
+        st.caption("Stream live video directly from your webcam with real-time AI bounding boxes, ByteTrack IDs, and line counting.")
         render_live_webcam(
             api_base_url=server.base_url,
             default_conf=float(config.get("model", "confidence_threshold", default=0.35)),
@@ -251,11 +287,60 @@ def page_live_webcam(config: AppConfig, detector: ObjectDetector) -> None:
             default_tracker=str(config.get("tracking", "tracker_type", default="bytetrack")),
         )
 
+    with tab_sim:
+        st.caption("Test the live real-time detection pipeline with a simulated camera feed without needing camera hardware permissions.")
+        samples_dir = PROJECT_ROOT / "datasets" / "samples" / "videos"
+        sim_videos = sorted(samples_dir.glob("*.mp4")) if samples_dir.exists() else []
+
+        s1, s2 = st.columns([3, 1])
+        with s1:
+            sim_choice = st.selectbox("Feed Source", options=sim_videos, format_func=lambda p: p.name, key="sim_video_choice")
+        with s2:
+            sim_conf = st.slider("Sim Confidence", 0.1, 0.9, 0.30, 0.05, key="sim_conf")
+
+        col_start, col_stop = st.columns([1, 1])
+        start_sim = col_start.button("Start Live Simulation", type="primary", key="sim_start_btn")
+        stop_sim = col_stop.button("Stop Simulation", key="sim_stop_btn")
+
+        if stop_sim:
+            st.session_state["run_sim_active"] = False
+
+        if start_sim:
+            st.session_state["run_sim_active"] = True
+
+        if st.session_state.get("run_sim_active", False) and sim_choice is not None:
+            frame_holder = st.empty()
+            stat_holder = st.empty()
+
+            cap = cv2.VideoCapture(str(sim_choice))
+            pipeline = ImageDetector(detector=detector, config=config)
+
+            frame_count = 0
+            t_start = time.time()
+            try:
+                while cap.isOpened() and st.session_state.get("run_sim_active", False) and frame_count < 60:
+                    ret, frame = cap.read()
+                    if not ret:
+                        cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        ret, frame = cap.read()
+                        if not ret:
+                            break
+
+                    frame_count += 1
+                    res = pipeline.detect_array(frame, conf=sim_conf, imgsz=320, save_output=False)
+                    elapsed = max(0.001, time.time() - t_start)
+                    sim_fps = frame_count / elapsed
+
+                    frame_holder.image(res.annotated_rgb, channels="RGB", width="stretch")
+                    stat_holder.markdown(
+                        f"**Simulated Live Stream** · Frame {frame_count} · **{sim_fps:.1f} FPS** · Detections in frame: **{len(res.detections)}**"
+                    )
+                    time.sleep(0.04)  # ~25 FPS pacing
+            finally:
+                cap.release()
+
     with tab_cloud:
-        st.caption(
-            "Capture live photos directly from your browser. "
-            "Works across all cloud hosting platforms (Streamlit Community Cloud, Hugging Face Spaces) without requiring secondary network ports."
-        )
+        st.caption("Capture live camera snapshots directly in your browser. Compatible with all devices, phones, and networks.")
         cam_photo = st.camera_input("Take Camera Snapshot", key="cloud_webcam_input", label_visibility="collapsed")
         if cam_photo is not None:
             pipeline = ImageDetector(detector=detector, config=config)
@@ -283,17 +368,28 @@ def page_live_webcam(config: AppConfig, detector: ObjectDetector) -> None:
 # 4. OBJECT TRACKING
 # ==============================================================================
 def page_object_tracking(config: AppConfig, detector: ObjectDetector) -> None:
-    render_page_head("Object Tracking", "Track unique object IDs across video frames with ByteTrack or BoT-SORT, counting lines, and ROI zones.")
+    render_page_head("Object Tracking", "Track objects with persistent IDs across video frames with ByteTrack or BoT-SORT, motion trails, and counting lines.")
 
-    t1, t2 = st.columns([3.0, 0.8])
+    samples_dir = PROJECT_ROOT / "datasets" / "samples" / "videos"
+    sample_videos = sorted(samples_dir.glob("*.mp4")) if samples_dir.exists() else []
+
+    t1, t2, t3 = st.columns([2.2, 1.4, 0.8])
     with t1:
         uploaded = st.file_uploader("Upload Video", type=["mp4", "avi", "mov", "mkv", "webm"], key="trk_upload", label_visibility="collapsed")
     with t2:
+        sample_choice = st.selectbox(
+            "Sample Video",
+            options=[None] + sample_videos,
+            format_func=lambda p: "Try a sample video..." if p is None else p.name,
+            key="trk_sample_select",
+            label_visibility="collapsed",
+        )
+    with t3:
         with st.popover("Options", width="stretch"):
             tracker_type = st.selectbox("Tracker", ["bytetrack", "botsort"], index=0, key="trk_algo")
-            conf = st.slider("Confidence", 0.05, 0.95, 0.35, 0.05, key="trk_conf")
+            conf = st.slider("Confidence", 0.05, 0.95, 0.25, 0.05, key="trk_conf")
             imgsz = st.select_slider("Resolution (px)", options=[320, 416, 480, 640], value=320, key="trk_imgsz")
-            show_trails = st.toggle("Trails", value=True, key="trk_trails")
+            show_trails = st.toggle("Motion Trails", value=True, key="trk_trails")
             st.divider()
             line_enabled = st.toggle("Counting Line", value=True, key="trk_line")
             line_orientation = st.radio("Orientation", ["horizontal", "vertical"], horizontal=True, disabled=not line_enabled, key="trk_lo")
@@ -303,29 +399,48 @@ def page_object_tracking(config: AppConfig, detector: ObjectDetector) -> None:
             roi_x = st.slider("ROI X", 0.0, 1.0, (0.15, 0.85), 0.05, disabled=not roi_enabled, key="trk_rx")
             roi_y = st.slider("ROI Y", 0.0, 1.0, (0.15, 0.85), 0.05, disabled=not roi_enabled, key="trk_ry")
 
+    video_source_path = None
+    source_name = "video"
+    is_temp = False
+
     if uploaded is not None:
-        if st.button("Run Tracking", type="primary"):
-            suffix = Path(uploaded.name).suffix or ".mp4"
-            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-                tmp.write(uploaded.getvalue())
-                tmp_path = Path(tmp.name)
+        suffix = Path(uploaded.name).suffix or ".mp4"
+        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+        tmp.write(uploaded.getvalue())
+        tmp.close()
+        video_source_path = Path(tmp.name)
+        source_name = Path(uploaded.name).stem
+        is_temp = True
+    elif sample_choice is not None:
+        video_source_path = sample_choice
+        source_name = sample_choice.stem
 
-            pbar = st.progress(0.0, text="Tracking...")
-            pipeline = VideoDetector(detector=detector, config=config)
-            count_cfg = CountingConfig(
-                line_enabled=line_enabled,
-                line_orientation=line_orientation,
-                line_position=line_pos,
-                roi_enabled=roi_enabled,
-                roi_box=(roi_x[0], roi_y[0], roi_x[1], roi_y[1]),
-            )
+    if video_source_path is None:
+        st.markdown('<div class="do-empty"><p>Upload a video or select a sample clip above to track objects with persistent IDs, trails, and zone counting.</p></div>', unsafe_allow_html=True)
+        return
 
-            def _cb(curr: int, total: int, fps: float, snap: Any) -> None:
-                pbar.progress(min(1.0, curr / max(1, total)), text=f"Frame {curr}/{total} · Unique IDs: {snap.unique_tracked_total}")
+    btn_col, _ = st.columns([1.5, 4.0])
+    run_clicked = btn_col.button(f"Track {source_name}", type="primary", key="btn_run_tracking")
 
-            try:
+    if run_clicked:
+        pbar = st.progress(0.0, text="Initializing tracker...")
+        pipeline = VideoDetector(detector=detector, config=config)
+        count_cfg = CountingConfig(
+            line_enabled=line_enabled,
+            line_orientation=line_orientation,
+            line_position=line_pos,
+            roi_enabled=roi_enabled,
+            roi_box=(roi_x[0], roi_y[0], roi_x[1], roi_y[1]),
+        )
+
+        def _cb(curr: int, total: int, fps: float, snap: Any) -> None:
+            pct = min(1.0, curr / max(1, total))
+            pbar.progress(pct, text=f"Frame {curr}/{total} · {fps:.1f} FPS · Unique IDs: {snap.unique_tracked_total}")
+
+        try:
+            with st.spinner(f"Running {tracker_type.upper()} object tracking..."):
                 out = pipeline.process_video(
-                    video_path=tmp_path,
+                    video_path=video_source_path,
                     conf=conf,
                     imgsz=imgsz,
                     tracking_enabled=True,
@@ -334,23 +449,26 @@ def page_object_tracking(config: AppConfig, detector: ObjectDetector) -> None:
                     counting_config=count_cfg,
                     progress_callback=_cb,
                 )
-                st.session_state["last_tracking_output"] = out
-                pbar.empty()
-            except Exception as exc:
-                st.error(str(exc))
-            finally:
-                tmp_path.unlink(missing_ok=True)
-    elif st.session_state.get("last_tracking_output") is None:
-        st.markdown('<div class="do-empty"><p>Upload a video above to track objects with unique IDs, trails, and zone counting.</p></div>', unsafe_allow_html=True)
+            st.session_state["last_tracking_output"] = out
+            pbar.empty()
+            st.success(f"Tracking complete: {out.unique_tracked_total} unique objects tracked across {out.processed_frames} frames!")
+        except Exception as exc:
+            st.error(f"Tracking error: {exc}")
+        finally:
+            if is_temp and video_source_path and video_source_path.exists():
+                try:
+                    video_source_path.unlink(missing_ok=True)
+                except Exception:
+                    pass
 
     out = st.session_state.get("last_tracking_output")
     if out is not None and Path(out.output_path).exists():
         snap = out.final_count_snapshot
         k1, k2, k3, k4 = st.columns(4)
-        k1.metric("Unique Tracked", out.unique_tracked_total)
-        k2.metric("Line In / Out", f"{snap.line_in_count} / {snap.line_out_count}")
-        k3.metric("ROI Unique", snap.roi_unique_total)
-        k4.metric("Avg FPS", f"{out.avg_processing_fps:.1f}")
+        k1.metric("Unique Tracked Objects", out.unique_tracked_total)
+        k2.metric("Virtual Line Crossings", f"{snap.line_in_count} In / {snap.line_out_count} Out")
+        k3.metric("ROI Objects", f"{snap.roi_current_count} in zone / {snap.roi_unique_total} total")
+        k4.metric("Avg Speed", f"{out.avg_processing_fps:.1f} FPS")
 
         vbytes = Path(out.output_path).read_bytes()
         st.video(vbytes)
@@ -362,7 +480,7 @@ def page_object_tracking(config: AppConfig, detector: ObjectDetector) -> None:
 # 5. MODEL INFORMATION
 # ==============================================================================
 def page_model_information(config: AppConfig, detector: ObjectDetector) -> None:
-    render_page_head("Model Information", "Active weights, device info, measured test performance, and supported classes.")
+    render_page_head("Model Information", "Active weights, device info, measured test performance, and visual evaluation reports.")
 
     weights = discover_available_weights()
     if weights:
@@ -374,26 +492,31 @@ def page_model_information(config: AppConfig, detector: ObjectDetector) -> None:
                 options=weights,
                 index=current_idx,
                 format_func=lambda p: f"{p.name} ({p.stat().st_size / (1024*1024):.2f} MB)",
+                key="model_page_weights_select",
             )
         with w2:
             st.write("")
-            if st.button("Load Model", type="primary", disabled=(chosen.resolve() == detector.weights_path.resolve()), width="stretch"):
-                st.session_state["selected_weights_path"] = str(chosen)
-                st.rerun()
+            if chosen.resolve() != detector.weights_path.resolve():
+                if st.button("Apply Model", type="primary", key="btn_apply_model"):
+                    st.session_state["selected_weights_path"] = str(chosen)
+                    st.rerun()
 
     info = detector.model_info
     dev = detect_compute_device("auto")
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Active Model", info.get("weights_name", "N/A"))
-    m2.metric("Device", detector.device.upper())
-    m3.metric("Parameters", f"{info.get('parameters', 0):,}")
-    m4.metric("Classes", str(info.get("num_classes", 0)))
+    m2.metric("Compute Device", detector.device.upper())
+    m3.metric("Model Parameters", f"{info.get('parameters', 0):,}")
+    m4.metric("Supported Classes", str(info.get("num_classes", 0)))
 
-    # Compact measured evaluation summary if available
+    # Measured independent test evaluation
     eval_path = PROJECT_ROOT / "reports" / "evaluation_metrics.json"
     if eval_path.exists():
         eval_data = json.loads(eval_path.read_text(encoding="utf-8"))
-        st.caption(f"Measured Independent Test Split ({eval_data.get('split_evaluated', 'test')}) · CUDA Available: {dev['cuda_available']}")
+        st.divider()
+        st.markdown("### Measured Test Evaluation Performance")
+        st.caption(f"Evaluated on held-out test split ({eval_data.get('split_evaluated', 'test')}) · Zero data leakage · Hardware: {dev.get('platform', 'CPU')}")
+
         e1, e2, e3, e4, e5 = st.columns(5)
         e1.metric("Precision", f"{eval_data['precision']:.3f}")
         e2.metric("Recall", f"{eval_data['recall']:.3f}")
@@ -401,10 +524,48 @@ def page_model_information(config: AppConfig, detector: ObjectDetector) -> None:
         e4.metric("mAP@0.5", f"{eval_data['map50']:.3f}")
         e5.metric("mAP@0.5:0.95", f"{eval_data['map50_95']:.3f}")
 
-        if eval_data.get("fps_benchmarks"):
-            st.dataframe(pd.DataFrame(eval_data["fps_benchmarks"])[["imgsz", "mean_latency_ms", "measured_fps", "device"]], width="stretch", hide_index=True)
+        # Tabbed visual evaluation plots
+        plots_dir = PROJECT_ROOT / "reports" / "plots"
+        if plots_dir.exists():
+            st.markdown("#### Evaluation Plots & Performance Curves")
+            p_tab1, p_tab2, p_tab3 = st.tabs(["📊 Precision-Recall & Confusion Matrix", "📉 Training & Validation Loss", "⚡ Inference Speed & Class Breakdown"])
 
-    search = st.text_input("Search supported classes", placeholder="e.g. person, laptop, car, bottle...")
+            with p_tab1:
+                col_cm, col_pr = st.columns(2)
+                cm_img = plots_dir / "confusion_matrix.png"
+                pr_img = plots_dir / "pr_curve.png"
+                f1_img = plots_dir / "f1_curve.png"
+                if cm_img.exists():
+                    col_cm.image(str(cm_img), caption="Confusion Matrix", width="stretch")
+                if pr_img.exists():
+                    col_pr.image(str(pr_img), caption="Precision-Recall Curve", width="stretch")
+                if f1_img.exists():
+                    st.image(str(f1_img), caption="F1 Confidence Curve", width="stretch")
+
+            with p_tab2:
+                col_tl, col_vl = st.columns(2)
+                tl_img = plots_dir / "training_loss.png"
+                vl_img = plots_dir / "validation_loss.png"
+                if tl_img.exists():
+                    col_tl.image(str(tl_img), caption="Training Loss Curve", width="stretch")
+                if vl_img.exists():
+                    col_vl.image(str(vl_img), caption="Validation Loss Curve", width="stretch")
+
+            with p_tab3:
+                col_fps, col_cls = st.columns(2)
+                fps_img = plots_dir / "fps_benchmark.png"
+                cls_img = plots_dir / "class_performance.png"
+                if fps_img.exists():
+                    col_fps.image(str(fps_img), caption="Measured FPS Benchmark across Resolutions", width="stretch")
+                if cls_img.exists():
+                    col_cls.image(str(cls_img), caption="Per-Class Performance Comparison", width="stretch")
+
+                if eval_data.get("fps_benchmarks"):
+                    st.dataframe(pd.DataFrame(eval_data["fps_benchmarks"])[["imgsz", "mean_latency_ms", "measured_fps", "device"]], width="stretch", hide_index=True)
+
+    st.divider()
+    st.markdown("### Supported Object Classes")
+    search = st.text_input("Search 80 COCO classes", placeholder="e.g. person, car, dog, bottle, laptop...")
     rows = [
         {"ID": cid, "Class": name}
         for cid, name in sorted(detector.class_names.items())
@@ -420,24 +581,12 @@ def main() -> None:
     config = load_config()
     apply_theme("light")
 
-    if "active_page" not in st.session_state:
-        st.session_state["active_page"] = NAV_PAGES[0]
-
     detector = get_active_detector(config)
 
-    # 1. Prominent Top Navigation Menu Bar (Always Visible on all screen sizes)
-    selected_page = render_top_menu_bar(
-        nav_pages=NAV_PAGES,
-        default_page=st.session_state["active_page"],
-        weights_name=detector.weights_path.name,
-        device=detector.device,
-    )
-    st.session_state["active_page"] = selected_page
-
-    # 2. Sidebar Navigation & Model Switcher (Collapsible & Synchronized)
+    # 1. Sidebar: Model selector & Quick Info
     with st.sidebar:
         st.markdown('<div class="do-brand">DetectObject</div>', unsafe_allow_html=True)
-        st.caption("Active Weights")
+        st.caption("Active Model Weights")
         weights_list = discover_available_weights()
         if weights_list:
             chosen = st.selectbox(
@@ -454,20 +603,18 @@ def main() -> None:
 
         st.caption(f"Device: **{detector.device.upper()}**")
         st.divider()
+        st.caption(f"Model: **{detector.weights_path.name}**")
+        st.caption(f"Classes: **{len(detector.class_names)}**")
+        st.caption("Architecture: **YOLO11n**")
 
-        st.caption("Navigation Menu")
-        for page_name in NAV_PAGES:
-            is_active = (page_name == selected_page)
-            if st.button(
-                page_name,
-                key=f"sidebar_nav_btn_{page_name}",
-                type="primary" if is_active else "secondary",
-                width="stretch",
-            ):
-                if st.session_state.get("top_navbar_radio") != page_name:
-                    st.session_state["top_navbar_radio"] = page_name
-                    st.session_state["active_page"] = page_name
-                    st.rerun()
+    # 2. Prominent Top Navigation Menu Bar
+    current_page = st.session_state.get("top_navbar_radio", NAV_PAGES[0])
+    selected_page = render_top_menu_bar(
+        nav_pages=NAV_PAGES,
+        default_page=current_page,
+        weights_name=detector.weights_path.name,
+        device=detector.device,
+    )
 
     # 3. Page Routing
     if selected_page == "Image Detection":
